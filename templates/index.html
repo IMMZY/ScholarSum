@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScholarSum – Intelligent Academic Summarizer</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Scholar<span>Sum</span></h1>
+      <p>Intelligent Academic Document Summarizer for Students</p>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>📄 Input Document</h2>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('text')">
+            Paste Text
+          </button>
+          <button class="tab-btn" onclick="switchTab('pdf')">Upload PDF</button>
+        </div>
+        <form id="summarize-form">
+          <div id="tab-text" class="tab-panel active">
+            <textarea
+              id="text_input"
+              name="text_input"
+              rows="10"
+              placeholder="Paste your academic text, research paper excerpt, or textbook chapter here..."
+            ></textarea>
+          </div>
+          <div id="tab-pdf" class="tab-panel">
+            <div class="upload-zone" id="upload-zone">
+              <input
+                type="file"
+                id="pdf_file"
+                name="pdf_file"
+                accept=".pdf"
+                onchange="handleFileSelect(this)"
+              />
+              <div class="icon">📂</div>
+              <p><strong>Click to choose</strong> or drag & drop a PDF here</p>
+              <p style="margin-top: 0.3rem; font-size: 0.8rem; color: #8a9ab0">
+                Max 16 MB · PDF only
+              </p>
+              <div class="file-name" id="file-name"></div>
+            </div>
+          </div>
+
+          <div class="api-key-row">
+            <label
+              >🔑 OpenAI API Key
+              <span style="font-weight: 400; color: #8a9ab0"
+                >(optional — uses TF-IDF if not provided)</span
+              ></label
+            >
+            <div class="api-key-wrap">
+              <input
+                type="password"
+                id="api_key"
+                name="api_key"
+                placeholder="sk-..."
+                autocomplete="off"
+              />
+              <span class="toggle-eye" onclick="toggleKey()">👁</span>
+            </div>
+            <div class="api-key-note">
+              Your key is never stored — only used for this request.
+            </div>
+          </div>
+
+          <div class="slider-row">
+            <label>Summary length:</label>
+            <input
+              type="range"
+              id="summary_length"
+              name="summary_length"
+              min="5"
+              max="50"
+              value="20"
+              oninput="updateSlider(this.value)"
+            />
+            <div class="slider-val" id="slider-display">20%</div>
+          </div>
+
+          <div class="error-box" id="error-box"></div>
+          <button type="submit" class="btn-summarize" id="submit-btn">
+            ✨ Summarize
+          </button>
+        </form>
+        <div class="spinner" id="spinner"></div>
+      </div>
+
+      <!-- Results -->
+      <div class="card" id="results">
+        <h2>📋 Summary</h2>
+        <div class="stats-row" id="stats-row"></div>
+        <div id="method-badge"></div>
+
+        <div class="view-toggle">
+          <button class="view-btn active" onclick="switchView('bullets')">
+            • Bullet Points
+          </button>
+          <button class="view-btn" onclick="switchView('para')">
+            ¶ Paragraph
+          </button>
+        </div>
+
+        <div class="bullets-view active" id="bullets-view">
+          <ul class="bullet-list" id="bullet-list"></ul>
+        </div>
+        <div class="para-view" id="para-view">
+          <div class="paragraph-box" id="paragraph-box"></div>
+        </div>
+
+        <h2 style="margin-top: 1.6rem">🔑 Key Terms</h2>
+        <div class="keywords-wrap" id="keywords-wrap"></div>
+
+        <!-- Download Section -->
+        <div class="download-section">
+          <h3>⬇️ Download Summary</h3>
+          <div class="download-btns">
+            <button class="dl-btn pdf" onclick="downloadSummary('pdf')">
+              <span>📄</span> Download PDF
+            </button>
+            <button class="dl-btn docx" onclick="downloadSummary('docx')">
+              <span>📝</span> Download Word
+            </button>
+            <button class="dl-btn txt" onclick="downloadSummary('txt')">
+              <span>📃</span> Download TXT
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>ScholarSum · Cambrian College NLP Capstone 2026</footer>
+
+    <script src="/static/main.js"></script>
+  </body>
+</html>
