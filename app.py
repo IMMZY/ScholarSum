@@ -1,11 +1,22 @@
 from flask import Flask, render_template, request, jsonify, send_file, Response
 import os, json
-from summarizer import summarize_text, extract_keywords
-from pdf_extractor import extract_text_from_pdf
-from exporter import export_txt, export_docx, export_pdf
+from dotenv import load_dotenv, dotenv_values
+from core.summarizer import summarize_text
+from core.tfidf_summarizer import extract_keywords
+from core.citations import extract_citations
+from core.pdf_extractor import extract_text_from_pdf
+from core.exporter import export_txt, export_docx, export_pdf
+
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(_env_path, override=True)
+
+if os.environ.get('OPENAI_API_KEY'):
+    print("[ScholarSum] OpenAI API key loaded — will use GPT-4o-mini.")
+else:
+    print("[ScholarSum] No OPENAI_API_KEY found — will use TF-IDF fallback.")
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = None  # No upload size limit
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -20,6 +31,16 @@ def add_cors_headers(response):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api-status')
+def api_status():
+    if os.path.exists(_env_path):
+        # Dev: read only from .env file so removing the key takes effect immediately.
+        key = dotenv_values(_env_path).get('OPENAI_API_KEY', '').strip()
+    else:
+        # Production (Railway etc.): key is injected as a real env var.
+        key = os.environ.get('OPENAI_API_KEY', '').strip()
+    return jsonify({'connected': bool(key)})
 
 @app.route('/summarize', methods=['POST'])
 def summarize():
@@ -54,24 +75,31 @@ def summarize():
     except ValueError:
         ratio = 0.20
 
-    api_key = request.form.get('api_key', '').strip()
-    # Set or clear the key each request so it doesn't persist from a previous call
-    if api_key:
-        os.environ['OPENAI_API_KEY'] = api_key
-    else:
-        os.environ.pop('OPENAI_API_KEY', None)
+    language = request.form.get('language', 'English').strip() or 'English'
 
-    bullet_points, paragraph, sentence_count, method = summarize_text(text, ratio)
+    # Dev: sync os.environ from .env file in real time (handles key removal).
+    # Production: os.environ is already set by the platform — leave it alone.
+    if os.path.exists(_env_path):
+        api_key = dotenv_values(_env_path).get('OPENAI_API_KEY', '').strip()
+        if api_key:
+            os.environ['OPENAI_API_KEY'] = api_key
+        else:
+            os.environ.pop('OPENAI_API_KEY', None)
+
+    bullet_points, paragraph, sentence_count, method = summarize_text(text, ratio, language)
     keywords = extract_keywords(text, top_n=10)
+    citations = extract_citations(text)
 
     return jsonify({
         'bullet_points': bullet_points,
         'paragraph': paragraph,
         'keywords': keywords,
+        'citations': citations,
         'original_word_count': len(text.split()),
         'summary_word_count': len(paragraph.split()),
         'sentence_count': sentence_count,
-        'method': method
+        'method': method,
+        'language': language,
     })
 
 
@@ -117,4 +145,5 @@ def download():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, host='127.0.0.1', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)

@@ -1,0 +1,20 @@
+# Environment variables — contains API keys, never push this
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Uploaded files (temporary, no need in repo)
+uploads/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# OS junk
+.DS_Store
+Thumbs.db

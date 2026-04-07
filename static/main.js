@@ -1,4 +1,58 @@
+// ── Theme toggle ──────────────────────────────────────
+(function initTheme() {
+  const saved = localStorage.getItem("ss-theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+  // icon updates after DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    const icon = document.getElementById("theme-icon");
+    if (icon) icon.textContent = saved === "dark" ? "☀️" : "🌙";
+  });
+})();
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  const next = isDark ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  localStorage.setItem("ss-theme", next);
+  document.getElementById("theme-icon").textContent = next === "dark" ? "☀️" : "🌙";
+}
+
 let activeTab = "text";
+let apiConnected = false;
+
+(async function checkApiStatus() {
+  try {
+    const res = await fetch("/api-status");
+    const { connected } = await res.json();
+    apiConnected = connected;
+    const badge = document.getElementById("api-status-badge");
+    if (connected) {
+      badge.className = "api-status-badge connected";
+      badge.innerHTML = '<span class="dot"></span> GPT-4o-mini Connected';
+    } else {
+      badge.className = "api-status-badge disconnected";
+      badge.innerHTML = '<span class="dot"></span> TF-IDF Mode (no API key)';
+    }
+    updateLangNote();
+  } catch {
+    // silently ignore if server not reachable yet
+  }
+})();
+
+function updateLangNote() {
+  const note = document.getElementById("lang-note");
+  const sel = document.getElementById("language");
+  if (!note || !sel) return;
+  if (!apiConnected && sel.value !== "English") {
+    note.textContent = "⚠ Translation requires GPT API";
+    note.style.display = "inline";
+  } else {
+    note.style.display = "none";
+  }
+}
+
+document.getElementById("language").addEventListener("change", updateLangNote);
 let sourceFilename = "document";
 let lastResult = null;
 
@@ -33,6 +87,17 @@ function switchView(view) {
 
 function updateSlider(val) {
   document.getElementById("slider-display").textContent = val + "%";
+  // Highlight matching preset button if value matches
+  const presetMap = { 15: 0, 25: 1, 45: 2 };
+  document.querySelectorAll(".preset-btn").forEach((btn, i) => {
+    btn.classList.toggle("active", presetMap[parseInt(val)] === i);
+  });
+}
+
+function setLength(val) {
+  const slider = document.getElementById("summary_length");
+  slider.value = val;
+  updateSlider(val);
 }
 
 function handleFileSelect(input) {
@@ -40,11 +105,6 @@ function handleFileSelect(input) {
   const name = file?.name || "";
   sourceFilename = name || "document";
   document.getElementById("file-name").textContent = name ? "✔ " + name : "";
-}
-
-function toggleKey() {
-  const input = document.getElementById("api_key");
-  input.type = input.type === "password" ? "text" : "password";
 }
 
 const zone = document.getElementById("upload-zone");
@@ -73,9 +133,7 @@ document
 
     btn.disabled = true;
     spinner.style.display = "block";
-    spinner.textContent = document.getElementById("api_key").value
-      ? "🤖 Asking GPT-4o-mini…"
-      : "📊 Analyzing with TF-IDF…";
+    spinner.textContent = "⏳ Analyzing document…";
 
     const formData = new FormData(this);
     if (activeTab === "text") formData.delete("pdf_file");
@@ -92,6 +150,17 @@ document
           activeTab === "pdf" ? sourceFilename : "document";
         lastResult = data;
         renderResults(data);
+        // Update the badge to reflect what actually ran (OpenAI vs TF-IDF fallback)
+        const badge = document.getElementById("api-status-badge");
+        if (data.method === "openai") {
+          apiConnected = true;
+          badge.className = "api-status-badge connected";
+          badge.innerHTML = '<span class="dot"></span> GPT-4o-mini Connected';
+        } else {
+          apiConnected = false;
+          badge.className = "api-status-badge disconnected";
+          badge.innerHTML = '<span class="dot"></span> TF-IDF Mode (no API key)';
+        }
       }
     } catch (err) {
       errorBox.textContent = "Network error. Is the server running?";
@@ -129,9 +198,40 @@ function renderResults(data) {
     .map(([word]) => `<span class="kw-chip">${word}</span>`)
     .join("");
 
+  // Citations
+  const citSection = document.getElementById("citations-section");
+  const citList = document.getElementById("citation-list");
+  if (data.citations && data.citations.length > 0) {
+    citList.innerHTML = data.citations
+      .map((c) => `<li class="citation-item">${c}</li>`)
+      .join("");
+    citSection.style.display = "block";
+  } else {
+    citSection.style.display = "none";
+  }
+
   document.getElementById("results").style.display = "block";
   switchView("bullets");
   document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+}
+
+async function copyToClipboard() {
+  const bulletsVisible = document.getElementById("bullets-view").classList.contains("active");
+  let text;
+  if (bulletsVisible) {
+    const items = document.querySelectorAll("#bullet-list li span");
+    text = Array.from(items).map((el, i) => `${i + 1}. ${el.textContent}`).join("\n");
+  } else {
+    text = document.getElementById("paragraph-box").textContent;
+  }
+  const btn = document.getElementById("copy-btn");
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = "✔ Copied!";
+  } catch {
+    btn.textContent = "✖ Failed";
+  }
+  setTimeout(() => { btn.innerHTML = "📋 Copy"; }, 2000);
 }
 
 async function downloadSummary(format) {

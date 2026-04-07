@@ -1,26 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ScholarSum – Intelligent Academic Summarizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <header>
-      <h1>Scholar<span>Sum</span></h1>
-      <p>Intelligent Academic Document Summarizer for Students</p>
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-logo">📖</div>
+          <div class="brand-text">
+            <h1>Scholar<span>Sum</span></h1>
+            <p>Intelligent Academic Document Summarizer</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <div id="api-status-badge" class="api-status-badge disconnected">
+            <span class="dot"></span> TF-IDF Mode (no API key)
+          </div>
+          <div
+            class="theme-toggle-wrap"
+            onclick="toggleTheme()"
+            title="Toggle dark / light mode"
+          >
+            <span class="theme-icon" id="theme-icon">🌙</span>
+            <button
+              class="theme-toggle"
+              id="theme-toggle"
+              aria-label="Toggle theme"
+            ></button>
+          </div>
+        </div>
+      </div>
     </header>
 
     <div class="container">
+      <!-- Input Card -->
       <div class="card">
-        <h2>📄 Input Document</h2>
+        <div class="card-title">
+          <div class="card-title-left">📄 Input Document</div>
+        </div>
+
         <div class="tabs">
           <button class="tab-btn active" onclick="switchTab('text')">
             Paste Text
           </button>
           <button class="tab-btn" onclick="switchTab('pdf')">Upload PDF</button>
         </div>
+
         <form id="summarize-form">
           <div id="tab-text" class="tab-panel active">
             <textarea
@@ -30,6 +65,7 @@
               placeholder="Paste your academic text, research paper excerpt, or textbook chapter here..."
             ></textarea>
           </div>
+
           <div id="tab-pdf" class="tab-panel">
             <div class="upload-zone" id="upload-zone">
               <input
@@ -40,48 +76,82 @@
                 onchange="handleFileSelect(this)"
               />
               <div class="icon">📂</div>
-              <p><strong>Click to choose</strong> or drag & drop a PDF here</p>
-              <p style="margin-top: 0.3rem; font-size: 0.8rem; color: #8a9ab0">
-                Max 16 MB · PDF only
+              <p>
+                <strong>Click to choose</strong> or drag &amp; drop a PDF here
+              </p>
+              <p
+                style="
+                  margin-top: 0.3rem;
+                  font-size: 0.78rem;
+                  color: var(--text-3);
+                "
+              >
+                PDF only
               </p>
               <div class="file-name" id="file-name"></div>
             </div>
           </div>
 
-          <div class="api-key-row">
-            <label
-              >🔑 OpenAI API Key
-              <span style="font-weight: 400; color: #8a9ab0"
-                >(optional — uses TF-IDF if not provided)</span
-              ></label
-            >
-            <div class="api-key-wrap">
-              <input
-                type="password"
-                id="api_key"
-                name="api_key"
-                placeholder="sk-..."
-                autocomplete="off"
-              />
-              <span class="toggle-eye" onclick="toggleKey()">👁</span>
+          <div class="controls-grid">
+            <div class="length-control">
+              <div class="length-label-row">
+                <span class="control-label">Summary Length</span>
+                <div class="length-presets">
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    onclick="setLength(15)"
+                  >
+                    Short
+                  </button>
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    onclick="setLength(25)"
+                  >
+                    Medium
+                  </button>
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    onclick="setLength(45)"
+                  >
+                    Detailed
+                  </button>
+                </div>
+              </div>
+              <div class="slider-row">
+                <input
+                  type="range"
+                  id="summary_length"
+                  name="summary_length"
+                  min="5"
+                  max="50"
+                  value="20"
+                  oninput="updateSlider(this.value)"
+                />
+                <div class="slider-val" id="slider-display">20%</div>
+              </div>
             </div>
-            <div class="api-key-note">
-              Your key is never stored — only used for this request.
-            </div>
-          </div>
 
-          <div class="slider-row">
-            <label>Summary length:</label>
-            <input
-              type="range"
-              id="summary_length"
-              name="summary_length"
-              min="5"
-              max="50"
-              value="20"
-              oninput="updateSlider(this.value)"
-            />
-            <div class="slider-val" id="slider-display">20%</div>
+            <div class="lang-control">
+              <span class="control-label">Output Language</span>
+              <select id="language" name="language">
+                <option value="English">🌐 English</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="Urdu">🇵🇰 Urdu</option>
+                <option value="Chinese">🇨🇳 Chinese (Simplified)</option>
+                <option value="Portuguese">🇵🇹 Portuguese</option>
+                <option value="Italian">🇮🇹 Italian</option>
+                <option value="Turkish">🇹🇷 Turkish</option>
+              </select>
+              <span class="lang-note" id="lang-note"
+                >⚠ Translation requires GPT API</span
+              >
+            </div>
           </div>
 
           <div class="error-box" id="error-box"></div>
@@ -92,9 +162,12 @@
         <div class="spinner" id="spinner"></div>
       </div>
 
-      <!-- Results -->
+      <!-- Results Card -->
       <div class="card" id="results">
-        <h2>📋 Summary</h2>
+        <div class="card-title">
+          <div class="card-title-left">📋 Summary</div>
+        </div>
+
         <div class="stats-row" id="stats-row"></div>
         <div id="method-badge"></div>
 
@@ -105,6 +178,9 @@
           <button class="view-btn" onclick="switchView('para')">
             ¶ Paragraph
           </button>
+          <button class="copy-btn" id="copy-btn" onclick="copyToClipboard()">
+            📋 Copy
+          </button>
         </div>
 
         <div class="bullets-view active" id="bullets-view">
@@ -114,28 +190,32 @@
           <div class="paragraph-box" id="paragraph-box"></div>
         </div>
 
-        <h2 style="margin-top: 1.6rem">🔑 Key Terms</h2>
+        <div class="section-heading">🔑 Key Terms</div>
         <div class="keywords-wrap" id="keywords-wrap"></div>
 
-        <!-- Download Section -->
+        <div id="citations-section" style="display: none">
+          <div class="section-heading">📚 Detected Citations</div>
+          <ul class="citation-list" id="citation-list"></ul>
+        </div>
+
         <div class="download-section">
-          <h3>⬇️ Download Summary</h3>
+          <h3>⬇ Download Summary</h3>
           <div class="download-btns">
             <button class="dl-btn pdf" onclick="downloadSummary('pdf')">
-              <span>📄</span> Download PDF
+              <span>📄</span> PDF
             </button>
             <button class="dl-btn docx" onclick="downloadSummary('docx')">
-              <span>📝</span> Download Word
+              <span>📝</span> Word
             </button>
             <button class="dl-btn txt" onclick="downloadSummary('txt')">
-              <span>📃</span> Download TXT
+              <span>📃</span> TXT
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <footer>ScholarSum · Cambrian College NLP Capstone 2026</footer>
+    {# <footer>ScholarSum &nbsp;·&nbsp; Cambrian College NLP Capstone 2026</footer> #}
 
     <script src="/static/main.js"></script>
   </body>
