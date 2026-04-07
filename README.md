@@ -125,8 +125,10 @@ PyPDF2
 nltk
 scikit-learn
 openai
+fpdf2
 reportlab
 python-docx
+python-dotenv
 ```
 
 ### Step 3 — NLTK Data
