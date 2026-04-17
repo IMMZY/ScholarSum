@@ -391,3 +391,7 @@ All downloads are named after the original uploaded file:
 - ROUGE score evaluation against human-written summaries
 
 ---
+
+## Authors
+Ime-Jnr Ime-Essien 
+Onyekachi Odunze
