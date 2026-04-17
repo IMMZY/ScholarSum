@@ -1,10 +1,8 @@
 ---
-
 # ScholarSum 🎓
 ### Intelligent Academic Document Summarizer for Students
 
-> A web-based NLP tool that transforms long academic documents into clean, structured summaries — powered by OpenAI GPT-4o-mini with a TF-IDF fallback engine.
-
+A web-based NLP tool that transforms long academic documents into clean, structured summaries – powered by OpenAI GPT-mini with a TF-IDF fallback engine.
 ---
 
 ## Table of Contents
