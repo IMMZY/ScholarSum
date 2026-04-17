@@ -393,5 +393,5 @@ All downloads are named after the original uploaded file:
 ---
 
 ## Authors
-Ime-Jnr Ime-Essien 
-Onyekachi Odunze
+- Ime-Jnr Ime-Essien 
+- Onyekachi Odunze
