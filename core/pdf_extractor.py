@@ -19,7 +19,7 @@ def extract_text_from_pdf(filepath):
                 if page_text:
                     text_parts.append(page_text)
 
-        full_text = '\n'.join(text_parts).strip()
+        full_text = '\n'.join(text_parts).strip() #combines everything
 
         if not full_text:
             return '', 'Could not extract text from this PDF. It may be scanned or image-based (OCR required).'

@@ -1,4 +1,5 @@
 import re
+#filter that removes garbage so model doesn't learn nonsense.
 
 # ── Junk-detection patterns ────────────────────────────────────────────────────
 JUNK_PATTERNS = [
@@ -19,7 +20,7 @@ JUNK_PATTERNS = [
     r'\b1[89]\d{2}\s*[-\u2013]\s*\d{2,4}\.?\s*$',
     r'^[A-Z][a-z]+,\s+[A-Z]\..*\d{4}',
 ]
-JUNK_RE = [re.compile(p, re.IGNORECASE) for p in JUNK_PATTERNS]
+JUNK_RE = [re.compile(p, re.IGNORECASE) for p in JUNK_PATTERNS] #compiles them
 
 # Broad regex covering checkbox / box-drawing / misc symbol Unicode blocks
 _SYMBOL_RE = re.compile(

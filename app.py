@@ -15,13 +15,13 @@ if os.environ.get('OPENAI_API_KEY'):
 else:
     print("[ScholarSum] No OPENAI_API_KEY found — will use TF-IDF fallback.")
 
-app = Flask(__name__)
+app = Flask(__name__) #starts web server
 app.config['MAX_CONTENT_LENGTH'] = None  # No upload size limit
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) #temp store uploaded docs
 
-@app.after_request
+@app.after_request #allows frontend talk to backend
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
@@ -47,6 +47,7 @@ def summarize():
     text = ''
     error = None
 
+    #if user uploads pdf, save it and extract using "extract_text_from_pdf()", else if nothing say error
     if 'pdf_file' in request.files and request.files['pdf_file'].filename != '':
         pdf_file = request.files['pdf_file']
         if not pdf_file.filename.lower().endswith('.pdf'):

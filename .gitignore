@@ -18,3 +18,6 @@ env/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# NLP File Guidelines
+NLP_Final_Project_Guidelines.pdf
